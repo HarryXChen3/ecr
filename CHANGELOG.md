@@ -11,6 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - `ecr.entity` is no longer a tag, the values are the same as the entity id itself.
+- Method `Registry:add()` now only accepts a single component.
+  - Does nothing if entity already has the component.
+  - Returns the latest value.
+  - Effectively an alternative to `Registry:patch()` except `Registry:on_change()` is not fired.
+- Method `View:of(list)` where `list` is an array `{ ecr.entity }`.
+  - e.g: `local selected = { e1, e2 }`, `for e, p in world:view(position):of(selected)`
 
 ### Improved
 

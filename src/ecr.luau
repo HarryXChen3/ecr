@@ -70,7 +70,7 @@ type HandleMT = {
     __index: HandleMT,
     destroy: (self: Handle) -> (),
     has_none: (self: Handle) -> boolean,
-    add: <T...>(self: Handle, T...) -> (),
+    add: <T>(self: Handle, T) -> T,
     set: <T>(self: Handle, ctype: T, value: T) -> Handle,
     insert: <T>(self: Handle, ctype: Array<T>, value: T) -> Handle,
     patch: <T>(self: Handle, ctype: T, fn: ((T) -> T)?) -> T,
@@ -115,7 +115,7 @@ export type Registry = {
     contains: (self: Registry, id: entity) -> boolean,
 
     has_none: (self: Registry, id: entity) -> boolean,
-    add: <T...>(self: Registry, id: entity, T...) -> (),
+    add: <T>(self: Registry, id: entity, ctype: T) -> T,
     set: <T>(self: Registry, id: entity, ctype: T, value: T) -> (),
     insert: <T>(self: Registry, id: entity, ctype: Array<T>, value: T) -> (),
     patch: <T>(self: Registry, id: entity, ctype: T, fn: ((T) -> T)?) -> T,
@@ -1709,8 +1709,8 @@ local Handle = (function(): HandleMT
         return self.registry:has_none(self.entity)
     end
 
-    function Handle.add<T...>(self: Handle, ...: T...)
-        self.registry:add(self.entity, ...)
+    function Handle.add<T>(self: Handle, ctype: T): T
+        return self.registry:add(self.entity, ctype)
     end
 
     function Handle.set<T>(self: Handle, ctype: T, value: T): Handle
@@ -1940,27 +1940,29 @@ local function registry_create(range_start: number?, range_stop: number?): Regis
         return true
     end
 
-    function registry.add<T...>(self: Registry, id: entity, ...: T...)
-        ASSERT_VALID_ENTITY(id)
+    function registry.add<T>(self: Registry, id: entity, ctype: T): T
+        local pool = STORAGE(ctype)
+    
         local key = ID_KEY(id)
+        POOL_RESIZE_MAP_IF_NEEDED(pool, key)
+        local idx_ver = BUFFER_GET(pool.map, key)
 
-        for i = 1, select("#", ...) do
-            local ctype = select(i, ...)
-            local pool = STORAGE(ctype)
-
-            POOL_RESIZE_MAP_IF_NEEDED(pool, key)
-            if BUFFER_GET(pool.map, key) ~= ID_NULL then continue end
-
+        if idx_ver ~= ID_NULL then
+            ID_ASSERT_VERSION_EQUAL(idx_ver, id)
+            local idx = ID_KEY(idx_ver)
+            return ARRAY_GET(pool.values, idx)
+        else
+            ASSERT_VALID_ENTITY(id)
             local ctor = ctype_ctors[ctype]
-
+            if ctor == false then throw(`entity does not have component and no constructor for {ctype_debug(ctype)}`) end
             if ctor == true then
                 POOL_ADD_ID(pool, id)
-            elseif ctor == false then
-                throw(`no constructor defined for {ctype_debug(ctype, i)}`)
+                return nil
             else
-                local value = (ctor :: () -> unknown)()
-                if value == nil then throw(`{ctype_debug(ctype, i)} constructor did not return a value`) end   
+                local value = (ctor :: () -> T)()
+                if value == nil then throw(`{ctype_debug(ctype)} constructor did not return a value`) end
                 POOL_ADD(pool, id, value)
+                return value
             end
         end
     end

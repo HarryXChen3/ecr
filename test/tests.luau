@@ -421,7 +421,8 @@ TEST("registry:add()", function()
 
     do CASE "add components"
         local id = reg:create()
-        reg:add(id, ADD_A, ADD_B)
+        reg:add(id, ADD_A)
+        reg:add(id, ADD_B)
         CHECK(reg:has(id, ADD_A))
         CHECK(reg:has(id, ADD_B))
     end
@@ -434,14 +435,14 @@ TEST("registry:add()", function()
     end
 
     do CASE "add a component with no constructor errors"
-        CHECK_ERR("no constructor defined for component (arg #1)", function()
+        CHECK_ERR("entity does not have component and no constructor for component (unknown)", function()
             local id = reg:create()
             reg:add(id, B)
         end)
     end
 
     do CASE "constructor returning nil errors"
-        CHECK_ERR("component (arg #1) constructor did not return a value", function()
+        CHECK_ERR("component (unknown) constructor did not return a value", function()
             local id = reg:create()
             reg:add(id, ADD_C)
         end)
@@ -2454,7 +2455,7 @@ TEST("ecr.name()", function()
         reg:get(id, cts.A)
     end)
 
-    CHECK_ERR(`no constructor defined for component "B"`, function()
+    CHECK_ERR(`entity does not have component and no constructor for component "B"`, function()
         reg:add(id, cts.B)
     end)
 
@@ -2502,7 +2503,9 @@ TEST("ecr.tag()", function()
     -- undefined behavior with unpacking an array with holes
     -- we pre-allocate the arrays so the above should not be an issue
     do CASE "view unpack"
-        e:add(TB, TC, TD)
+        e:add(TB)
+        e:add(TC)
+        e:add(TD)
         e:set(A, true)
 
         local ran = 0

@@ -130,6 +130,12 @@ do TITLE "add"
                 reg:add(ids[i], A)
             end
         end)
+
+        BENCH("1 component (existing)", function()
+            for i = 1, START(N) do
+                reg:add(ids[i], A)
+            end
+        end)
     end
 
     do
@@ -137,7 +143,8 @@ do TITLE "add"
 
         BENCH("2 components", function()
             for i = 1, START(N) do
-                reg:add(ids[i], A, B)
+                reg:add(ids[i], A)
+                reg:add(ids[i], B)
             end
         end)
     end
@@ -147,7 +154,10 @@ do TITLE "add"
 
         BENCH("4 components", function()
             for i = 1, START(N) do
-                reg:add(ids[i], A, B, C, D)
+                reg:add(ids[i], A)
+                reg:add(ids[i], B)
+                reg:add(ids[i], C)
+                reg:add(ids[i], D)
             end
         end)
     end
@@ -178,7 +188,10 @@ do TITLE "add"
 
         BENCH("4 tags", function()
             for i = 1, START(N) do
-                reg:add(ids[i], TA, TB, TC, TD)
+                reg:add(ids[i], TA)
+                reg:add(ids[i], TB)
+                reg:add(ids[i], TC)
+                reg:add(ids[i], TD)
             end
         end)
     end
@@ -744,7 +757,10 @@ do
 
         for i = 1, N do
             local e = reg:handle()
-            e:add(TA, TB, TC, TD)
+            e:add(TA)
+            e:add(TB)
+            e:add(TC)
+            e:add(TD)
         end
 
         BENCH("1 tag", function()
