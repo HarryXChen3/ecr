@@ -524,7 +524,9 @@ local function POOL_COPY<T>(self: Pool<T>, into: Pool<T>)
 end
 
 local function pool_clear<T>(self: Pool<T>)
+    local map = self.map
     local entities = self.entities
+    local values = self.values
 
     local on_clear = self.on_clear :: Array<() -> ()>
     if on_clear then
@@ -543,9 +545,18 @@ local function pool_clear<T>(self: Pool<T>)
         for _, listener in after_clear do listener() end
     end
 
+    local THRESHOLD = 0.5
+    if self.size/self.capacity <= THRESHOLD then
+        for i = 0, self.size - 1 do
+            local id = BUFFER_GET(entities, i)
+            BUFFER_SET(map, ID_KEY(id), ID_NULL)
+            ARRAY_SET(values, i, nil)
+        end
+    else
+        BUFFER_FILL(map, 0, self.map_max, ID_NULL)
+        table.clear(values)
+    end
     self.size = 0
-    BUFFER_FILL(self.map, 0, self.map_max, ID_NULL)
-    table.clear(self.values)
 end
 
 local function pool_create<T>(size: number?): Pool<T>

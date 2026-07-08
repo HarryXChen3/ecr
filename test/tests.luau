@@ -919,6 +919,33 @@ TEST("registry:clear()", function()
         end
     end
 
+    do CASE "partial clear"
+        local reg = ecr.registry()
+
+        for i = 1, 100 do
+            local id = reg:create()
+            reg:set(id, A, i)
+        end
+
+        reg:clear(A)
+
+        local id1 = reg:create()
+        local id2 = reg:create()
+        reg:set(id1, A, 1)
+        reg:set(id2, A, 2)
+
+        CHECK(reg:has(id1, A))
+        CHECK(reg:has(id2, A))
+        reg:clear(A)
+        CHECK(not reg:has(id1, A))
+        CHECK(not reg:has(id2, A))
+
+        reg:set(id1, A, 1)
+        reg:set(id2, A, 2)
+        CHECK(reg:has(id1, A))
+        CHECK(reg:has(id2, A))
+    end
+
     do CASE "clear entities"
         local reg = ecr.registry()
     

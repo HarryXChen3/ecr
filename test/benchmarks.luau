@@ -610,6 +610,46 @@ do TITLE "clear"
         START(N)
         reg:clear(A)
     end)
+
+    local function setup_partial_random(ratio: number)
+        local reg = REG_INIT(N)
+
+        local ids = table.create(N)
+        for i = 1, N do
+            local e = reg:create()
+            ids[i] = e
+        end
+
+        local selected = table.clone(ids) :: { number }
+        for _ = 1, N*(1 - ratio) do
+            local n = #selected 
+            local i_to_remove = math.random(1, n)
+            selected[i_to_remove] = selected[n]
+            selected[n] = nil
+        end
+
+        for _, e in selected do
+            reg:set(e, A, true)
+            reg:set(e, B, true)
+            reg:set(e, C, true)
+            reg:set(e, D, true)
+            reg:set(e, E, true)
+            reg:set(e, F, true)
+            reg:set(e, G, true)
+            reg:set(e, H, true)
+        end
+    
+        return reg, ids
+    end
+
+    for _, ratio in { 1, 0.5, 0.2, 0.1, 0.01 } do
+        BENCH(`1 component ({math.round(ratio*100)}%)`, function()
+            local reg = setup_partial_random(ratio)
+            local n = reg:storage(A).size
+            START(n)
+            reg:clear(A)
+        end)
+    end
 end
 
 do TITLE("create view")
@@ -917,10 +957,6 @@ do TITLE("destroy")
 
     BENCH("0 components", function()
         local reg = ecr.registry()
-
-        for p in reg:storage() do
-            print"p"
-        end
 
         local ids = table.create(N)
 
